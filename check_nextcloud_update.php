@@ -45,7 +45,7 @@ function get_newest_version($nextcloud_releases="https://nextcloud.com/changelog
   }catch(Exception $e){
     error($e);
   }
-
+  # searching the first nextcloud-#.#.#.zip on the page
     if(preg_match('/.*?>nextcloud-(\d+\.\d+\.\d+)\.zip<.*/',$homepage,$res)){
       if(is_array($res)){
         return $res[1];
