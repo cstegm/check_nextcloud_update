@@ -17,8 +17,6 @@ $longopts = array(
 
 $options = getopt($shortopts, $longopts);
 
-$nextcloud_releases = "https://download.nextcloud.com/server/releases/";
-
 if(array_key_exists("help",$options)){
   echo "HELP:\n";
   echo " -H hostname \n";
@@ -45,7 +43,7 @@ function error($e){
   exit(3);
 }
 
-function get_newest_version($nextcloud_releases="https://download.nextcloud.com/server/releases/"){
+function get_newest_version($nextcloud_releases="https://nextcloud.com/changelog/"){
   $return=false;
   try {
     $homepage = file_get_contents($nextcloud_releases);
@@ -55,25 +53,12 @@ function get_newest_version($nextcloud_releases="https://download.nextcloud.com/
   }catch(Exception $e){
     error($e);
   }
-
-  $arr=explode("\n",$homepage);
-  $new[]=array_pop($arr);
-  $new[]=array_pop($arr);
-  $new[]=array_pop($arr);
-  $new[]=array_pop($arr);
-  $new[]=array_pop($arr);
-  $new[]=array_pop($arr);
-  $new[]=array_pop($arr);
-  $new[]=array_pop($arr);
-//  print_r($new);
-
-  foreach($new as $val){
-    if(preg_match('/nextcloud-([0-9]+\.[0-9]\.[0-9])\.zip\.md5/',$val,$res)){
+  # searching the first nextcloud-#.#.#.zip on the page
+    if(preg_match('/.*?>nextcloud-(\d+\.\d+\.\d+)\.zip<.*/',$homepage,$res)){
       if(is_array($res)){
         return $res[1];
       }
     }
-  }
 
   return false;
 }
@@ -81,8 +66,17 @@ function get_newest_version($nextcloud_releases="https://download.nextcloud.com/
 function get_installed_version($nextcloud_status){
   $res=false;
 
+
+  $arrContextOptions=array(
+    "ssl"=>array(
+      "verify_peer"=>false,
+      "verify_peer_name"=>false,
+    ),
+  );
+
+
   try{
-    $status = file_get_contents($nextcloud_status);
+    $status = file_get_contents($nextcloud_status, false, stream_context_create($arrContextOptions)); 
     if($status === false){
       error("No Content");
     }
