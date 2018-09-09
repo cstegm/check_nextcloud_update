@@ -57,9 +57,16 @@ function get_newest_version($nextcloud_releases="https://nextcloud.com/changelog
 
 function get_installed_version($nextcloud_status){
   $res=false;
-  
+
+  $arrContextOptions=array(
+    "ssl"=>array(
+      "verify_peer"=>false,
+      "verify_peer_name"=>false,
+    ),
+  );
+
   try{
-    $status = file_get_contents($nextcloud_status);
+    $status = file_get_contents($nextcloud_status, false, stream_context_create($arrContextOptions)); 
     if($status === false){
       error("No Content");
     }
