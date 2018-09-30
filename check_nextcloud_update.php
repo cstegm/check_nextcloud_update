@@ -6,11 +6,13 @@
 
 # Changelog
 # 2018-08-05 added optional perfdata output ("-p" ) - doctore74 <doc@snowheaven.de>
+# 2018-09-30 added optional clickable output via href ("-c" ) - doctore74 <doc@snowheaven.de>
 
 $shortopts  = "";
-$shortopts .= "H:";  // Required value
-$shortopts .= "S";   // No value
+$shortopts .= "H:";  // Hostname
+$shortopts .= "S";   // SSL
 $shortopts .= "p";   // perfdata output
+$shortopts .= "c";   // clickable output via href
 $longopts = array(
   "help"
 );
@@ -19,9 +21,10 @@ $options = getopt($shortopts, $longopts);
 
 if(array_key_exists("help",$options)){
   echo "HELP:\n";
-  echo " -H hostname \n";
+  echo " -H hostname (required)\n";
   echo " -S SSL\n";
   echo " -p perfdata output\n";
+  echo " -c clickable output via href\n";
 
   exit(3);
 }
@@ -36,7 +39,8 @@ if(array_key_exists("S",$options)){
 }else{
   $nextcloud_server = "http://".$options["H"];
 }
-$nextcloud_status = "$nextcloud_server/status.php";
+$nextcloud_status_url = "$nextcloud_server/status.php";
+
 
 function error($e){
   echo "Something went wrong: $e";
@@ -63,7 +67,7 @@ function get_newest_version($nextcloud_releases="https://nextcloud.com/changelog
   return false;
 }
 
-function get_installed_version($nextcloud_status){
+function get_installed_version($nextcloud_status_url){
   $res=false;
 
 
@@ -76,7 +80,7 @@ function get_installed_version($nextcloud_status){
 
 
   try{
-    $status = file_get_contents($nextcloud_status, false, stream_context_create($arrContextOptions)); 
+    $status = file_get_contents($nextcloud_status_url, false, stream_context_create($arrContextOptions));
     if($status === false){
       error("No Content");
     }
@@ -92,7 +96,7 @@ function get_installed_version($nextcloud_status){
 
 # get data
 $newer=get_newest_version();
-$actual=get_installed_version($nextcloud_status);
+$actual=get_installed_version($nextcloud_status_url);
 
 # perfdata
 if(array_key_exists("p",$options)){
@@ -103,10 +107,18 @@ else {
 }
 
 # output
-if(version_compare($newer,$actual,"eq")){
-  echo "Current version is ($actual). (channel: stable, version: $newer)|$perfdata";
+if (version_compare($newer,$actual,"eq")) {
+  if (array_key_exists("c",$options)) {
+    echo "<a href='$nextcloud_server' target=_blank>Current version is ($actual). (channel: stable, version: $newer)|$perfdata</a>";
+  } else {
+    echo "Current version is ($actual). (channel: stable, version: $newer)|$perfdata";
+  }
   exit(0);
-}else{
-  echo "Current version is ($actual). Update to Nextcloud $newer available. (channel: stable)|$perfdata";
+} else {
+  if (array_key_exists("c",$options)) {
+    echo "<a href='$nextcloud_server' target=_blank>Current version is ($actual). Update to Nextcloud $newer available. (channel: stable)|$perfdata</a>";
+  } else {
+    echo "Current version is ($actual). Update to Nextcloud $newer available. (channel: stable)|$perfdata";
+  }
   exit(1);
 }
